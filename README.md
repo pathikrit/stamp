@@ -11,7 +11,7 @@ val pattern: String = FormatLike("Feb 05, 2014")
 assert(pattern == "MMM DD, YYYY")
 
 import java.time.LocalDateTime
-import java.time.DateTimeFormatter
+import java.time.format.DateTimeFormatter
 val formatter = DateTimeFormatter.ofPattern(pattern)
 println(LocalDateTime.now().format(formatter))
 ```

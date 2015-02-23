@@ -5,22 +5,23 @@ import java.text.DateFormatSymbols
 import scala.util.Try
 import scala.util.matching.Regex, Regex.Match
 
-private[stamp] case class Rule(pattern: String, matchRegexes: Seq[String], check: String => Boolean = _ => true) {
+private[stamp] case class Rule(pattern: String, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
 
-  def addCheck(f: Int => Boolean) = this.copy(check = (snippet) => check(snippet) && Try(snippet.toInt).map(f).getOrElse(false))
+  def addCheck(f: Int => Boolean) = copy(checks = checks :+ ((snippet: String) => Try(snippet.toInt) map f getOrElse false))
 
   def addRangeCheck(r: Range) = addCheck(r.contains)
 
   val matchRegex = matchRegexes.mkString("(", ")|(", ")").r     // join them using an OR
 
-  private[this] def checkMatch(snippet: Match) = if (check(snippet.matched)) Some(pattern) else None
+  private[this] def check(snippet: Match) = if (checks.forall(_(snippet.matched))) Some(pattern) else None
 
-  def apply(example: String): String = matchRegex.replaceSomeIn(example, checkMatch)
+  /**
+   * replace all substrings in $example that matches any of $matchRegexes (and passes all $checks) with $pattern
+   */
+  def apply(example: String): String = matchRegex.replaceSomeIn(example, check)
 }
 
 private[stamp] object Rule {
-  import scala.collection.JavaConversions._
-
   implicit class StringImplicits(s: String) {
     def word = s"(?i)\\b$s\\b"
   }
@@ -29,9 +30,10 @@ private[stamp] object Rule {
   def apply(pattern: String) = new Rule(pattern, Seq(s"\\d{${pattern.length}}"))
 
   // A rule pertaining to known DateFormatSymbols e.g. 'MMM' must map to 'Jan'
-  def apply(pattern: String, list: DateFormatSymbols => Array[String]) = new Rule(pattern, list(symbols).filter(_.nonEmpty).map(_.word))
-
-  val symbols = DateFormatSymbols.getInstance()
+  def apply(pattern: String, list: DateFormatSymbols => Array[String]) = {
+    import scala.collection.JavaConversions._
+    new Rule(pattern, list(DateFormatSymbols.getInstance()).filter(_.nonEmpty).map(_.word))
+  }
 
   val era = Rule("GG", _.getEras)
   val eraFull = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
@@ -92,6 +94,9 @@ private[stamp] object Rule {
 object FormatLike {
 
   private[FormatLike] implicit class StringImplicits(s: String) {
+    /**
+     * F#'s forward-pipe operator
+     */
     def |>(rule: Rule) = rule(s)
   }
 
