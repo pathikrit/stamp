@@ -3,22 +3,25 @@ package com.github.pathikrit.stamp
 import java.text.DateFormatSymbols
 
 import scala.util.Try
-import scala.util.matching.Regex, Regex.Match
+import scala.util.matching.Regex, Regex.{MatchIterator, Match}
 
-private[stamp] case class Rule(pattern: String, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
+private[stamp] case class Rule(pattern: String, applyOnce: Boolean, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
 
   def addCheck(f: Int => Boolean) = copy(checks = checks :+ ((snippet: String) => Try(snippet.toInt) map f getOrElse false))
 
   def addRangeCheck(r: Range) = addCheck(r.contains)
 
-  val matchRegex = matchRegexes.mkString("(", ")|(", ")").r     // join them using an OR
-
-  private[this] def check(snippet: Match) = if (checks.forall(_(snippet.matched))) Some(pattern) else None
-
-  /**
-   * replace all substrings in $example that matches any of $matchRegexes (and passes all $checks) with $pattern
-   */
-  def apply(example: String): String = matchRegex.replaceSomeIn(example, check)
+  def apply(example: String): String = {
+    val matchRegex = matchRegexes.mkString("(", ")|(", ")").r     // join them using an OR
+    var count = 0
+    def check(snippet: Match) = if (checks.forall(_(snippet.matched)) && (!applyOnce || (applyOnce && count == 0))) {
+      count += 1
+      Some(pattern)
+    } else {
+      None
+    }
+    matchRegex.replaceSomeIn(example, check)
+  }
 }
 
 private[stamp] object Rule {
@@ -27,27 +30,28 @@ private[stamp] object Rule {
   }
 
   // A simple rule pertaining to numbers e.g. 'YY' must parse a number containing 2 digits
-  def apply(pattern: String) = new Rule(pattern, Seq(s"\\d{${pattern.length}}"))
+  def apply(pattern: String) = new Rule(pattern, applyOnce = true, Seq(s"\\d{${pattern.length}}"))
 
   // A rule pertaining to known DateFormatSymbols e.g. 'MMM' must map to 'Jan'
   def apply(pattern: String, list: DateFormatSymbols => Array[String]) = {
     import scala.collection.JavaConversions._
-    new Rule(pattern, list(DateFormatSymbols.getInstance()).filter(_.nonEmpty).map(_.word))
+    new Rule(pattern, applyOnce = false, list(DateFormatSymbols.getInstance()).filter(_.nonEmpty).map(_.word))
   }
 
   val era = Rule("GG", _.getEras)
-  val eraFull = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
+  val eraFull = new Rule(pattern = "GGGG", applyOnce = false,
+    matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
 
-  val year2 = Rule("YY")
+  val year2 = Rule("YY")          //TODO
   val year4 = Rule("YYYY")
 
-  val month = Rule("M").addRangeCheck(1 to 12)
-  val month2 = Rule("MM").addRangeCheck(1 to 12)
+  val month = Rule("M").addRangeCheck(1 to 12)      //TODO
+  val month2 = Rule("MM").addRangeCheck(1 to 12)    //TODO
   val month3 = Rule("MMM", _.getShortMonths)
-  val month4 = Rule("MMMM", _.getMonths)
+  val monthFull = Rule("MMMM", _.getMonths)
 
-  val dayOfMonth = Rule("d").addRangeCheck(1 to 31)
-  val dayOfMonth2 = Rule("dd").addRangeCheck(1 to 31)
+  val dayOfMonth = Rule("d").addRangeCheck(1 to 31)     //TODO
+  val dayOfMonth2 = Rule("dd").addRangeCheck(1 to 31)   //TODO
 
 // TODO: Q1 vs 3rd of quarter vs 03 vs 3???
 //  val quarter = "QQ"
@@ -58,6 +62,7 @@ private[stamp] object Rule {
 
   val amPm = Rule("a", _.getAmPmStrings)
 
+  // TODO:
   val hourOfDayAmPm = Rule("h").addRangeCheck(1 to 12)
   val hourOfDayAmPm2 = Rule("hh").addRangeCheck(1 to 12)
 
@@ -107,6 +112,9 @@ object FormatLike {
   def apply(example: String): String = example |>
     Rule.era |> Rule.eraFull |>
     Rule.year4 |>
-    Rule.month4 |> Rule.month3 |> Rule.dayOfMonth
+    Rule.monthFull |> Rule.month3 |>
+    Rule.dayOfWeekFull |> Rule.dayOfWeek3 |>
+    //TODO
+    Rule.dayOfMonth2
 }
 

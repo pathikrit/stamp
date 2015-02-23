@@ -5,15 +5,15 @@ Because life is too short to grok [Java's DateTimeFormatter](https://docs.oracle
 
 
 ```scala
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import com.github.pathikrit.stamp._
 
 val pattern: String = FormatLike("Feb 05, 2014")
 assert(pattern == "MMM DD, YYYY")
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 val formatter = DateTimeFormatter.ofPattern(pattern)
 println(LocalDateTime.now().format(formatter))
 ```
 
-[See the tests for more examples](src/test/scala/com/github/pathikrit/stamp/FormatLikeSpec.scala).
+[See the tests for more examples](src/test/scala/com/github/pathikrit/stamp/FormatLikeSpec.scala)

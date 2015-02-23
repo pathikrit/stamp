@@ -16,6 +16,7 @@ class FormatLikeSpec extends Specification with DataTables { override def is =
   def positiveSpec =
   "example"                                         || "time"       | "output"                                        |
   "2013 AD"                                         !! t1           ! "1986 AD"                                       |
+  "26-Jan-1996 BC"                                  !! t1           ! "25-Aug-1986 AD"                                |
   "1500 Anno Domini"                                !! t1           ! "1986 Anno Domini"                              |
   "Jan 26, 1926"                                    !! t1           ! "Aug 25, 1986"                                  |>
   {
