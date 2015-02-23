@@ -1,7 +1,7 @@
 package com.github.pathikrit.stamp
 
-import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
 import org.specs2.mutable.Specification
@@ -19,7 +19,8 @@ class FormatLikeSpec extends Specification {
   "stamp" should {
     "parse human examples" in {
       implicit val date = LocalDateTime.of(1986, 8, 25, 11, 23, 32, 19)
-      "'I love' 2013 AD" mustFormatTo "I love 1986 AD"
+      "2013 AD" mustFormatTo "1986 AD"
+      "Jan 26, 1926" mustFormatTo "Aug 25, 1986"
     }
   }
 }

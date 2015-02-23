@@ -1,28 +1,21 @@
 package com.github.pathikrit.stamp
 
-import java.time.format.DateTimeFormatter
+import java.text.DateFormatSymbols
 
-import scala.util.matching.Regex
-import scala.util.matching.Regex.Match
+import scala.util.matching.Regex, Regex.Match
 
 /**
- * Template for a rule e.g. pattern "GG" matches regex "AD | BC | Anno Domini | Before Christ"
+ * Template for a rule e.g. pattern "GG" matches regex "AD, BC"
  */
-class Rule(pattern: String, matchRegex: Regex) {
+class Rule(pattern: String, matchRegexes: Seq[String]) {
 
-  /**
-   * Overloaded constructor that given multiple match regexes, creates a single one by ORing them
-   */
-  def this(pattern: String, matchRegexes: Regex*) = this(pattern, matchRegexes.mkString("(", ")|(", ")").r)
+  val matchRegex = matchRegexes.mkString("(", ")|(", ")").r     // join them using an OR
 
   /**
    * Do additional sanity checks if necessary on a matched snippet
    * e.g. for "M" pattern make sure the month snippet is in between 1 and 12
    */
-  def check(snippet: String) = {
-    println("Checking", snippet)
-    true
-  }
+  def check(snippet: String) = true
 
   /**
    * Applies the check function to a match and returns Some(pattern) if it passes else None
@@ -32,33 +25,37 @@ class Rule(pattern: String, matchRegex: Regex) {
   /**
    * Replace all substrings in example which matches one of the matchRegexes and passes check with pattern
    */
-  def apply(example: String): String = {
-    val result = matchRegex.replaceSomeIn(example, checkMatch)
-    println("Result", result, matchRegex)
-    result
-  }
+  def apply(example: String): String = matchRegex.replaceSomeIn(example, checkMatch)
 }
 
 object Rule {
+  import scala.collection.JavaConversions._
 
   private[this] implicit class StringImplicits(s: String) {
-    def word = s"\\b$s\\b".r
+    def word = s"(?i)\\b$s\\b"
   }
 
-  val era = new Rule(pattern = "GG", matchRegexes = "AD".word, "BC".word)
-  val fullEra = new Rule(pattern = "GGGG", matchRegexes = "Anno Domini".word, "Before Christ".word)
+  /**
+   * A simple rule pertaining to numbers e.g. 'YY' must parse a number containing 2 digits
+   */
+  def apply(pattern: String) = new Rule(pattern, Seq(s"\\d{${pattern.length}}"))
 
-//
-//  val shortYear   = Pattern(pattern =   "YY", example = "86")
-//  val year        = Pattern(pattern = "YYYY", example = "1986")
-//
-//  val month       = Pattern(pattern =    "M", example = "8")
-//  val month2      = Pattern(pattern =   "MM", example = "08")
-//  val month3      = Pattern(pattern =  "MMM", example = "AUG")
-//  val fullMonth   = Pattern"MMMM"
-//
-//  val dayOfMonth = "d"
-//  val dayOfMonth2 = "dd"
+  val symbols = DateFormatSymbols.getInstance()
+  def toWords(a: Array[String]) = a.filter(_.nonEmpty).map(_.word)
+
+  val era = new Rule(pattern = "GG", matchRegexes = toWords(symbols.getEras))
+  val fullEra = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word))
+
+  val shortYear = Rule("YY")
+  val year = Rule("YYYY")
+
+  val month = Rule("M")
+  val month2 = Rule("MM")
+  val month3 = new Rule(pattern = "MMM", matchRegexes = toWords(symbols.getShortMonths))
+  val fullMonth = new Rule(pattern = "MMM", matchRegexes = toWords(symbols.getMonths))
+
+  val dayOfMonth = Rule("d")
+  val dayOfMonth2 = Rule("dd")
 //
 //  val quarter = "QQ"
 //  val fullQuarter = "QQQQ"
@@ -71,13 +68,18 @@ object Rule {
 //
 }
 
-
 object FormatLike {
 
   private[FormatLike] implicit class StringImplicits(s: String) {
     def |>(rule: Rule) = rule(s)
   }
 
-  def apply(example: String): String = example |> Rule.era |> Rule.fullEra
-
+  /**
+   * Given an example return a DateTimeFormatter pattern e.g.
+   * DateTimeFormatter.pattern(FormatLike("Jan 26, 1996"))
+   */
+  def apply(example: String): String = example |>
+    Rule.era |> Rule.fullEra |>
+    Rule.year |>
+    Rule.fullMonth |> Rule.month3 |> Rule.dayOfMonth
 }
