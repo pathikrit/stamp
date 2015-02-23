@@ -17,8 +17,9 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 resolvers += Resolver.typesafeRepo("releases")
 
 libraryDependencies ++= Seq(
-  "org.threeten" % "threetenbp" % "1.2" % Test,
   "org.specs2" %% "specs2" % "2.4.1" % Test
 )
 
-seq(bintraySettings:_*)
+scalacOptions in Test += "-target:jvm-1.8"
+
+bintraySettings
