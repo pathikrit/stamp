@@ -48,7 +48,7 @@ object Rule {
   val symbols = DateFormatSymbols.getInstance()
 
   val era = Rule("GG", _.getEras)
-  val fullEra = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word))
+  val fullEra = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
 
   val shortYear = Rule("YY")
   val year = Rule("YYYY")
@@ -60,16 +60,27 @@ object Rule {
 
   val dayOfMonth = Rule("d")
   val dayOfMonth2 = Rule("dd")
-//
+
 //  val quarter = "QQ"
 //  val fullQuarter = "QQQQ"
-//
-    val dayOfWeek = Rule("EEE", _.getShortWeekdays)
-    val fullDayOfWeek = Rule("EEEE", _.getWeekdays)
-//
-    val amPm = Rule("a", _.getAmPmStrings)
 
-//
+  val dayOfWeek = Rule("EEE", _.getShortWeekdays)
+  val fullDayOfWeek = Rule("EEEE", _.getWeekdays)
+
+  val amPm = Rule("a", _.getAmPmStrings)
+
+  val hourOfDayAmPm = Rule("h")
+  val hourOfDayAmPm2 = Rule("hh")
+
+  val hourOfDay = Rule("H")
+  val hourOfDay2 = Rule("HH")
+
+  val minuteOfHour = Rule("m")
+  val minuteOfHours = Rule("mm")
+
+  val secondOfMinute = Rule("s")
+  val secondOfMinute2 = Rule("ss")
+
 }
 
 object FormatLike {
@@ -91,10 +102,6 @@ object FormatLike {
 /**
    Q/q     quarter-of-year             number/text       3; 03; Q3; 3rd quarter
 
-   h       clock-hour-of-am-pm (1-12)  number            12
-   H       hour-of-day (0-23)          number            0
-   m       minute-of-hour              number            30
-   s       second-of-minute            number            55
    S       fraction-of-second          fraction          978
    A       milli-of-day                number            1234
    n       nano-of-second              number            987654321

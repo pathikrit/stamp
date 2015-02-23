@@ -20,6 +20,4 @@ libraryDependencies ++= Seq(
   "org.specs2" %% "specs2" % "2.4.1" % Test
 )
 
-scalacOptions in Test += "-target:jvm-1.8"
-
 bintraySettings
