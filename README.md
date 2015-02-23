@@ -16,4 +16,4 @@ val formatter = DateTimeFormatter.ofPattern(pattern)
 println(LocalDateTime.now().format(formatter))
 ```
 
-[See the tests for more examples](src/test/scala/com/github/pathikrit/FormatLikeSpec).
+[See the tests for more examples](src/test/scala/com/github/pathikrit/stamp/FormatLikeSpec.scala).
