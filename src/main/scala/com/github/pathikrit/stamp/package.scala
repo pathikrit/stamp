@@ -5,6 +5,8 @@ import java.text.DateFormatSymbols
 import scala.util.Try
 import scala.util.matching.Regex, Regex.{MatchIterator, Match}
 
+package object stamp{
+
 private[stamp] case class Rule(pattern: String, applyOnce: Boolean, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
 
   def addCheck(f: Int => Boolean) = copy(checks = checks :+ ((snippet: String) => Try(snippet.toInt) map f getOrElse false))
@@ -118,3 +120,4 @@ object FormatLike {
     Rule.dayOfMonth2
 }
 
+}
