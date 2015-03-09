@@ -2,8 +2,7 @@ package com.github.pathikrit.stamp
 
 import java.time.LocalDateTime, java.time.format.DateTimeFormatter
 
-import org.specs2.matcher.DataTables
-import org.specs2.mutable.Specification
+import org.specs2.matcher.DataTables, org.specs2.mutable.Specification
 
 class FormatLikeSpec extends Specification with DataTables { override def is =
   "Work for valid examples" ! positiveSpec

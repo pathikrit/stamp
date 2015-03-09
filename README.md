@@ -18,3 +18,6 @@ println(LocalDateTime.now().format(formatter))
 ```
 
 [See the tests for more examples](src/test/scala/com/github/pathikrit/stamp/FormatLikeSpec.scala)
+
+
+See also: [ScalaVerbalExpressions](https://github.com/pathikrit/ScalaVerbalExpressions) - another library for writing self-documenting regexes.
