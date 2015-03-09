@@ -2,12 +2,13 @@ package com.github.pathikrit
 
 import java.text.DateFormatSymbols
 
+import scala.collection.immutable.Range.Inclusive
 import scala.util.Try
 import scala.util.matching.Regex, Regex.{MatchIterator, Match}
 
 package object stamp {
 
-  private[stamp] case class Rule(pattern: String, applyOnce: Boolean, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
+  private[stamp] case class Rule(pattern: String, matchRegexes: Seq[String], checks: List[String => Boolean] = Nil) {
 
     def addCheck(f: Int => Boolean) = copy(checks = checks :+ ((snippet: String) => Try(snippet.toInt) map f getOrElse false))
 
@@ -15,9 +16,7 @@ package object stamp {
 
     def apply(example: String): String = {
       val matchRegex = matchRegexes.mkString("(", ")|(", ")").r     // join them using an OR
-      var count = 0
-      def check(snippet: Match) = if (checks.forall(_(snippet.matched)) && (!applyOnce || (applyOnce && count == 0))) {
-        count += 1
+      def check(snippet: Match) = if (checks.forall(_(snippet.matched))) {
         Some(pattern)
       } else {
         None
@@ -32,17 +31,16 @@ package object stamp {
     }
 
     // A simple rule pertaining to numbers e.g. 'YY' must parse a number containing 2 digits
-    def apply(pattern: String) = new Rule(pattern, applyOnce = true, Seq(s"\\d{${pattern.length}}"))
+    def apply(pattern: String) = new Rule(pattern, Seq(s"\\d{${pattern.length}}"))
 
     // A rule pertaining to known DateFormatSymbols e.g. 'MMM' must map to 'Jan'
     def apply(pattern: String, list: DateFormatSymbols => Array[String]) = {
       import scala.collection.JavaConversions._
-      new Rule(pattern, applyOnce = false, list(DateFormatSymbols.getInstance()).filter(_.nonEmpty).map(_.word))
+      new Rule(pattern, list(DateFormatSymbols.getInstance()).filter(_.nonEmpty).map(_.word))
     }
 
     val era = Rule("GG", _.getEras)
-    val eraFull = new Rule(pattern = "GGGG", applyOnce = false,
-      matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
+    val eraFull = new Rule(pattern = "GGGG", matchRegexes = Seq("Anno Domini".word, "Before Christ".word)) //TODO: These should be constants in Java somewhere!!
 
     val year2 = Rule("YY")          //TODO
     val year4 = Rule("YYYY")
@@ -92,7 +90,7 @@ package object stamp {
      Z       zone-offset                 offset-Z          +0000; -0800; -08:00;
 
      '       escape for text             delimiter
-     ''      single quote                literal           '
+     &#39;&#39;      single quote                literal           '
      [       optional section start
      ]       optional section end
       */
