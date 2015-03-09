@@ -1,7 +1,6 @@
 package com.github.pathikrit.stamp
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime, java.time.format.DateTimeFormatter
 
 import org.specs2.matcher.DataTables
 import org.specs2.mutable.Specification

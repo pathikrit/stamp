@@ -11,8 +11,7 @@ assert(pattern == "MMM DD, YYYY")
 
 You can then use the pattern as:
 ```scala
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDateTime, java.time.format.DateTimeFormatter
 
 val formatter = DateTimeFormatter.ofPattern(pattern)
 println(LocalDateTime.now().format(formatter))
